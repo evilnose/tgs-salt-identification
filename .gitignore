@@ -1,2 +1,5 @@
 model.h5
 data
+__pycache__
+.ipynb_checkpoints
+.idea
