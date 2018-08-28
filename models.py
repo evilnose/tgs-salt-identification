@@ -7,6 +7,7 @@ from constants import IM_SHAPE
 
 def UNet(input_size=IM_SHAPE):
     inputs = Input(input_size)
+    inputs = Lambda(lambda x: x / 255) (inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(inputs)
     conv1 = Conv2D(64, 3, activation='relu', padding='same', kernel_initializer='he_normal')(conv1)
     pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
