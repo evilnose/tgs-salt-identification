@@ -1,0 +1,2 @@
+set DATETIME=%DATE:~4,2%_%DATE:~7,2%_%DATE:~12,2%__%TIME:~0,2%_%TIME:~3,2%_%TIME:~6,2%
+set DATETIME=%DATETIME: =0%
