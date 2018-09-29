@@ -1,0 +1,1 @@
+IM_SHAPE = (128, 128, 1)  # Input and output have the same # of channels

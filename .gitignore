@@ -1,7 +1,9 @@
-model.h5
 data
 raw_data
 **/__pycache__
 .ipynb_checkpoints
 .idea
 **/*.h5
+__pycache__
+.ipynb_checkpoints
+.idea
