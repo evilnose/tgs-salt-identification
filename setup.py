@@ -2,8 +2,8 @@ from setuptools import find_packages
 from setuptools import setup
 
 REQUIRED_PACKAGES = [
-    'Keras',
-    'h5py',
+    'Keras==2.2.0',
+    'h5py==2.8.0',
     'opencv-python',
 ]
 

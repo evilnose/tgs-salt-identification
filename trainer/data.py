@@ -30,8 +30,11 @@ def resize_image(img, target_shape):
 
 
 def augment(X, Y):
+    orig_shape = X.shape[1:]
     X = np.append(X, [np.fliplr(x) for x in X], axis=0)
     Y = np.append(Y, [np.fliplr(y) for y in Y], axis=0)
+    X = np.append(X, np.rot90(X, 1, axes=(1, 2))).reshape((-1,) + orig_shape)
+    Y = np.append(Y, np.rot90(Y, 1, axes=(1, 2))).reshape((-1,) + orig_shape)
     return X, Y
 
 

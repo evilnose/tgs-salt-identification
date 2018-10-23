@@ -1,11 +1,11 @@
 from keras import Input, Model
 from keras.initializers import glorot_uniform
 from keras.layers import Conv2D, MaxPooling2D, Conv2DTranspose, concatenate, Add, BatchNormalization, Activation, \
-    AveragePooling2D, Flatten, Dense, ZeroPadding2D, LeakyReLU, LocallyConnected2D, Dropout
+    AveragePooling2D, Flatten, Dense, ZeroPadding2D, LeakyReLU, LocallyConnected2D, Dropout, Concatenate
 
 from trainer.constants import IM_SHAPE, IM_SHAPE_BBOX
 
-
+# UNet is NOT my work; copied directly from https://github.com/zhixuhao/unet.
 def UNet(input_size=IM_SHAPE):
     inputs = Input(input_size)
 
@@ -84,10 +84,70 @@ def YoloReduced(input_shape=IM_SHAPE_BBOX):
     X = conv_block(X, 1024, (3, 3), (1, 1))
     X = conv_block(X, 1024, (3, 3), (1, 1))
     X = local_block(X, 256, (3, 3), (1, 1))
+    X = Flatten()(X)
+    X = Dense(1000)(X)
+    X = LeakyReLU(alpha=0.1)(X)
+    X = Dropout(0.3)(X)
     outputs = Dense(5, activation='linear')(X)
 
     model = Model(inputs=inputs, outputs=outputs)
     return model
+
+
+def HigherResCNN(input_shape=IM_SHAPE_BBOX):
+    inputs = Input(input_shape)
+
+    X = conv_block(inputs, 32, (3, 3), (1, 1))
+    X = conv_block(X, 64, (3, 3), (2, 2))  # Downsample
+    X_shortcut = X
+    X = conv_block(X, 32, (1, 1), (1, 1))
+    X = conv_block(X, 64, (3, 3), (1, 1))
+    X = Add()([X_shortcut, X])
+    X = conv_block(X, 128, (3, 3), (2, 2))  # Downsample
+    X_shortcut = X
+    X = conv_block(X, 64, (1, 1), (1, 1))
+    X = conv_block(X, 128, (3, 3), (1, 1))
+    X = Add()([X_shortcut, X])
+    X_shortcut = X
+    X = conv_block(X, 64, (1, 1), (1, 1))
+    X = conv_block(X, 128, (3, 3), (1, 1))
+    X = Add()([X_shortcut, X])
+    X = conv_block(X, 256, (3, 3), (2, 2))  # Downsample
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = shortcut_block(X, 128)
+    X = conv_block(X, 512, (3, 3), (2, 2))  # Downsample
+    X = shortcut_block(X, 256)
+    X = shortcut_block(X, 256)
+    X = shortcut_block(X, 256)
+    X = shortcut_block(X, 256)
+    X = shortcut_block(X, 256)
+    X = shortcut_block(X, 256)
+    X = conv_block(X, 1024, (3, 3), (2, 2))  # Downsample
+    X = shortcut_block(X, 512)
+    X = shortcut_block(X, 512)
+    X = shortcut_block(X, 512)
+    X = shortcut_block(X, 512)
+    X = Flatten()(X)
+    X = Dense(1024)(X)
+    X = LeakyReLU(alpha=0.1)(X)
+    X = Dropout(0.4)(X)
+    outputs = Dense(5, activation='linear')(X)
+
+    model = Model(inputs=inputs, outputs=outputs)
+    return model
+
+
+def shortcut_block(X, filters):
+    X_shortcut = X
+    X = conv_block(X, filters, (1, 1), (1, 1))
+    X = conv_block(X, filters * 2, (3, 3), (1, 1))
+    return Add()([X_shortcut, X])
 
 
 def CustomCNN(input_shape=IM_SHAPE_BBOX, output_shape=5):
@@ -137,33 +197,35 @@ def CustomCNN1(input_shape=IM_SHAPE_BBOX, output_shape=5):
     X = local_block(X, 256, (3, 3), (1, 1))
     X = Flatten()(X)
     X = Dense(1000)(X)
+    X = Dropout(0.35)(X)
     X = LeakyReLU(alpha=0.1)(X)
     outputs = Dense(output_shape, activation='linear')(X)
+    # outputs = Dropout(0.35)(X)
 
     model = Model(inputs=inputs, outputs=outputs)
     return model
 
 
-def MiniCNN(input_shape=IM_SHAPE_BBOX, output_shape=5):
-    inputs = Input(input_shape)
-
-    X = BatchNormalization()(inputs)
-    X = conv_block(X, 64, (7, 7), (2, 2))
-    X = MaxPooling2D((2, 2), (2, 2))(X)
-    X = conv_block(X, 192, (3, 3), (1, 1))
-    X = MaxPooling2D((2, 2), (2, 2))(X)
-    X = conv_block(X, 128, (1, 1), (1, 1))
-    X = conv_block(X, 256, (3, 3), (1, 1))
-    X = MaxPooling2D((2, 2), (2, 2))(X)
-    X = conv_block(X, 256, (1, 1), (1, 1))
-    X = local_block(X, 256, (3, 3), (1, 1))
-    X = Flatten()(X)
-    X = Dense(1000)(X)
-    X = Dropout(0.4)(X)
-    outputs = Dense(output_shape, activation='linear')(X)
-
-    model = Model(inputs=inputs, outputs=outputs)
-    return model
+# def BinaryModel(input_shape=IM_SHAPE_BBOX, categories=2):
+#     inputs = Input(input_shape)
+#
+#     X = BatchNormalization()(inputs)
+#     X = conv_block(X, 64, (7, 7), (2, 2))
+#     X = MaxPooling2D((2, 2), (2, 2))(X)
+#     X = conv_block(X, 192, (3, 3), (1, 1))
+#     X = MaxPooling2D((2, 2), (2, 2))(X)
+#     X = conv_block(X, 128, (1, 1), (1, 1))
+#     X = conv_block(X, 256, (3, 3), (1, 1))
+#     X = MaxPooling2D((2, 2), (2, 2))(X)
+#     X = conv_block(X, 256, (1, 1), (1, 1))
+#     X = local_block(X, 256, (3, 3), (1, 1))
+#     X = Flatten()(X)
+#     X = Dense(1000)(X)
+#     X = Dropout(0.4)(X)
+#     outputs = Dense(output_shape, activation='linear')(X)
+#
+#     model = Model(inputs=inputs, outputs=outputs)
+#     return model
 
 
 def conv_block(X, filters, kernel_size, strides):

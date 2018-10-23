@@ -1,0 +1,29 @@
+trainingInput:
+  scaleTier: BASIC_GPU
+  hyperparameters:
+    goal: MAXIMIZE
+    hyperparameterMetricTag: val_bbox_mIOU
+    maxTrials: 25
+    maxParallelTrials: 1
+    enableTrialEarlyStopping: True
+    params:
+    - parameterName: lambda-obj
+      type: DOUBLE
+      minValue: 0
+      maxValue: 1
+      scaleType: UNIT_LINEAR_SCALE
+    - parameterName: lambda-noobj
+      type: DOUBLE
+      minValue: 0
+      maxValue: 1
+      scaleType: UNIT_LINEAR_SCALE
+    - parameterName: lambda-coord
+      type: DOUBLE
+      minValue: 0
+      maxValue: 1
+      scaleType: UNIT_LINEAR_SCALE
+    - parameterName: lr
+      type: DOUBLE
+      minValue: 0.0001
+      maxValue: 0.01
+      scaleType: UNIT_LOG_SCALE
